@@ -18,6 +18,7 @@
 
 #include <qgsvectorlayer.h>
 #include <qgsapplication.h>
+#include "qt_modeltest/modeltest.h"
 #include "../src/featurelistmodel.h"
 #include "qgistestapp.h"
 
@@ -30,6 +31,7 @@ class FeatureListModelTest: public QObject, QgisTestApp
     {
       mLayer = new QgsVectorLayer( TESTDATA_DIR "/shapefiles/airports.shp", "airports", "ogr" );
       mModel = new FeatureListModel;
+      new ModelTest( mModel, mModel );
       Q_ASSERT( mLayer->isValid() );
     }
 
