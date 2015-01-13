@@ -18,10 +18,10 @@
 
 #include <qgsvectorlayer.h>
 #include <qgsapplication.h>
-#include "../src/featuremodel.h"
+#include "../src/featurelistmodel.h"
 #include "qgistestapp.h"
 
-class FeatureModelTest: public QObject, QgisTestApp
+class FeatureListModelTest: public QObject, QgisTestApp
 {
     Q_OBJECT
 
@@ -29,24 +29,17 @@ class FeatureModelTest: public QObject, QgisTestApp
     void initTestCase()
     {
       mLayer = new QgsVectorLayer( TESTDATA_DIR "/shapefiles/airports.shp", "airports", "ogr" );
-      mModel = new FeatureModel;
+      mModel = new FeatureListModel;
       Q_ASSERT( mLayer->isValid() );
     }
 
     void testModelData()
     {
-      QgsFeature f;
-      mLayer->getFeatures().nextFeature( f );
+      QMap<QgsVectorLayer*, QgsFeatureRequest> requests;
+      requests.insert( mLayer, QgsFeatureRequest().setFilterExpression( "fk_region = 18 " ) );
+      mModel->setFeatures( requests );
 
-      mModel->setFeature( Feature( f, mLayer ) );
-
-      int rowcount = mModel->rowCount( QModelIndex() );
-      Q_ASSERT( rowcount >= mLayer->pendingFields().count() );
-
-      // Check that the attribute value is ok
-      Q_ASSERT( mModel->data( mModel->index( 0, 0 ), FeatureModel::AttributeValue ).toInt() == 1 );
-      // Check that the attribute name is ok
-      Q_ASSERT( 0 == mModel->data( mModel->index( 0, 0 ), FeatureModel::AttributeName ).toString().compare( "ID" ) );
+      Q_ASSERT( mModel->rowCount( QModelIndex() ) == 5 );
     }
 
     void cleanupTestCase()
@@ -58,10 +51,10 @@ class FeatureModelTest: public QObject, QgisTestApp
     }
 
   private:
-    FeatureModel* mModel;
+    FeatureListModel* mModel;
     QgsVectorLayer* mLayer;
 };
 
-QTEST_MAIN( FeatureModelTest )
+QTEST_MAIN( FeatureListModelTest )
 
-#include "featuremodel.moc"
+#include "test_featurelistmodel.moc"

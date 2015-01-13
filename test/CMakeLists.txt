@@ -24,7 +24,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
 # Required because Qt is compiled with -reduce-relocation
 SET (CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
-ADD_DEFINITIONS ("-DTESTDATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/QGIS-Testdata\"")
+ADD_DEFINITIONS ("-DTESTDATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/QGIS-Sampledata\"")
 
 MACRO (ADD_UNIT_TEST testname testsrc)
   SET(test_${testname}_SRCS ${testsrc})
@@ -44,4 +44,5 @@ MACRO (ADD_UNIT_TEST testname testsrc)
   ADD_TEST(qgis_${testname} ${CMAKE_CURRENT_BINARY_DIR}/../output/bin/test_${testname})
 ENDMACRO (ADD_UNIT_TEST)
 
-ADD_UNIT_TEST(featuremodel featuremodel.cpp)
+ADD_UNIT_TEST(featuremodel test_featuremodel.cpp)
+ADD_UNIT_TEST(featurelistmodel test_featurelistmodel.cpp)
