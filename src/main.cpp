@@ -26,10 +26,11 @@
 #include <QLabel>
 #include <QDialog>
 #include <QApplication>
+#include <QTranslator>
+
 #include "qgsapplication.h"
 #include "qgslogger.h"
 #include <qmainwindow.h>
-#include <QApplication>
 
 int main( int argc, char ** argv )
 {
@@ -55,6 +56,10 @@ int main( int argc, char ** argv )
   app.setPluginPath( "" QGIS_PLUGIN_DIR );
 #endif
   app.initQgis();
+
+  QTranslator translator;
+  translator.load( "qfield_de" );
+  app.installTranslator( &translator );
 
   // Set up the QSettings environment must be done after qapp is created
   QCoreApplication::setOrganizationName( "OPENGIS.ch" );
