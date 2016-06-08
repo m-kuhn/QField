@@ -44,6 +44,7 @@
 #include "mapsettings.h"
 #include "featurelistextentcontroller.h"
 #include "coordinatetransform.h"
+#include "modelhelper.h"
 
 QgisMobileapp::QgisMobileapp( QgsApplication *app, QWindow *parent )
   : QQuickView( parent )
@@ -54,17 +55,21 @@ QgisMobileapp::QgisMobileapp( QgsApplication *app, QWindow *parent )
   format.setSamples( 8 );
   setFormat( format );
 
-  QString dotqgis2Dir = mPlatformUtils.getIntentExtra("DOTQGIS2_DIR");
-  QString shareDir = mPlatformUtils.getIntentExtra("SHARE_DIR");
+  QString dotqgis2Dir = mPlatformUtils.configDir();
+  QString shareDir = mPlatformUtils.shareDir();
 
-  if (dotqgis2Dir != ""){
-      mSettings.setValue("/QField/App/DOTQGIS2_DIR", dotqgis2Dir);
-      qDebug() << "STORED DOTQGIS2_DIR:" << mSettings.value("/QField/App/DOTQGIS2_DIR","ERROR, THIS SHOULD NOT HAPPEN");
+  if ( dotqgis2Dir != "" )
+  {
+    mSettings.setValue( "/QField/App/DOTQGIS2_DIR", dotqgis2Dir );
+    qDebug() << "STORED DOTQGIS2_DIR:" << mSettings.value( "/QField/App/DOTQGIS2_DIR","ERROR, THIS SHOULD NOT HAPPEN" );
   }
-  if (shareDir != ""){
-      mSettings.setValue("/QField/App/SHARE_DIR", shareDir);
-      qDebug() << "STORED SHARE_DIR:" << mSettings.value("/QField/App/SHARE_DIR","ERROR, THIS SHOULD NOT HAPPEN");
+  if ( shareDir != "" )
+  {
+    mSettings.setValue( "/QField/App/SHARE_DIR", shareDir );
+    qDebug() << "STORED SHARE_DIR:" << mSettings.value( "/QField/App/SHARE_DIR","ERROR, THIS SHOULD NOT HAPPEN" );
   }
+
+  mLayerTree = new QgsLayerTreeModel( QgsProject::instance()->layerTreeRoot(), this );
 
   initDeclarative();
 
@@ -108,6 +113,7 @@ void QgisMobileapp::initDeclarative()
   qmlRegisterType<QgsQuickMapCanvasMap>( "org.qgis", 1, 0, "MapCanvasMap" );
   qmlRegisterUncreatableType<AppInterface>( "org.qgis", 1, 0, "QgisInterface", "QgisInterface is only provided by the environment and cannot be created ad-hoc" );
   qmlRegisterUncreatableType<Settings>( "org.qgis", 1, 0, "Settings", "" );
+  qmlRegisterUncreatableType<QgsProject>( "org.qgis", 1, 0, "Project", "" );
   qmlRegisterType<FeatureListModel>( "org.qgis", 1, 0, "FeatureListModel" );
   qmlRegisterType<FeatureModel>( "org.qgis", 1, 0, "FeatureModel" );
   qmlRegisterType<FeatureListModelSelection>( "org.qgis", 1, 0, "FeatureListModelSelection" );
@@ -117,6 +123,11 @@ void QgisMobileapp::initDeclarative()
   qmlRegisterType<FeatureListExtentController>( "org.qgis", 1, 0, "FeaturelistExtentController" );
   qmlRegisterType<CoordinateTransform>( "org.qgis", 1, 0, "CoordinateTransform" );
   qmlRegisterType<CRS>( "org.qgis", 1, 0, "CRS" );
+  qmlRegisterType<Geometry>( "org.qgis", 1, 0, "Geometry" );
+  qmlRegisterType<ModelHelper>( "org.qgis", 1, 0, "ModelHelper" );
+
+  qmlRegisterType<QgsMapLayerProxyModel>( "org.qgis", 1, 0, "MapLayerModel" );
+  qmlRegisterType<QgsVectorLayer>( "org.qgis", 1, 0, "VectorLayer" );
 
   // Calculate device pixels
   int dpiX = QApplication::desktop()->physicalDpiX();
@@ -131,6 +142,8 @@ void QgisMobileapp::initDeclarative()
   rootContext()->setContextProperty( "featureListModel", &mFeatureListModel );
   rootContext()->setContextProperty( "settings", &mSettings );
   rootContext()->setContextProperty( "version", QString( "" VERSTR ) );
+  rootContext()->setContextProperty( "layerTree", mLayerTree );
+  rootContext()->setContextProperty( "project", QgsProject::instance() );
 }
 
 void QgisMobileapp::loadProjectQuirks()
@@ -203,6 +216,21 @@ void QgisMobileapp::onAfterFirstRendering()
   }
 }
 
+void QgisMobileapp::onLayerAdded( QgsMapLayer* ml )
+{
+  rootContext()->engine()->setObjectOwnership( ml, QQmlEngine::CppOwnership );
+  qDebug() << "Layer added " << ml;
+  connect( ml, SIGNAL( destroyed( QObject* ) ), this, SLOT( onLayerDeleted( QObject* ) ) );
+  QgsVectorLayer* vl = qobject_cast<QgsVectorLayer*>( ml );
+  if ( vl )
+  {
+    connect( vl, SIGNAL( featureAdded( QgsFeatureId ) ), vl, SLOT( triggerRepaint() ) );
+    connect( vl, SIGNAL( featureDeleted( QgsFeatureId ) ), vl, SLOT( triggerRepaint() ) );
+    connect( vl, SIGNAL( attributeValueChanged( QgsFeatureId,int,QVariant ) ), vl, SLOT( triggerRepaint() ) );
+    connect( vl, SIGNAL( geometryChanged( QgsFeatureId,QgsGeometry& ) ), vl, SLOT( triggerRepaint() ) );
+  }
+}
+
 void QgisMobileapp::loadLastProject()
 {
   QVariant lastProjectFile = QSettings().value( "/qgis/project/lastProjectFile" );
@@ -215,11 +243,13 @@ void QgisMobileapp::loadProjectFile( const QString& path )
   emit loadProjectStarted( path );
   QgsProject::instance()->read( path );
   loadProjectQuirks();
+
   emit loadProjectEnded();
 }
 
 QgisMobileapp::~QgisMobileapp()
 {
+  QgsMapLayerRegistry::instance()->removeAllMapLayers();
   // Reintroduce when created on the heap
   // delete QgsEditorWidgetRegistry::instance();
   delete QgsProject::instance();

@@ -8,59 +8,75 @@ QT += widgets quick concurrent xml positioning printsupport svg sql opengl senso
 
 android {
     QT += androidextras
+    HEADERS += androidplatformutilities.h
+    SOURCES += androidplatformutilities.cpp
 }
 include( ../qfield.pri )
 include( ../qgis.pri )
 include( ../version.pri )
 
 
-HEADERS += appinterface.h \
-            coordinatetransform.h \
-            crs.h \
-            feature.h \
-            featurelistextentcontroller.h \
-            featurelistmodel.h \
-            featurelistmodelhighlight.h \
-            featurelistmodelselection.h \
-            featuremodel.h \
-            mapsettings.h \
-            maptransform.h \
-            qgismobileapp.h \
-            qgsmapcanvasproxy.h \
-            qgsquickmapcanvasmap.h \
-            qgssggeometry.h \
-            settings.h \
-    platformutilities.h
+HEADERS += \
+    appinterface.h \
+    coordinatetransform.h \
+    crs.h \
+    feature.h \
+    featurelistextentcontroller.h \
+    featurelistmodel.h \
+    featurelistmodelhighlight.h \
+    featurelistmodelselection.h \
+    featuremodel.h \
+    mapsettings.h \
+    maptransform.h \
+    qgismobileapp.h \
+    qgsmapcanvasproxy.h \
+    qgsquickmapcanvasmap.h \
+    qgssggeometry.h \
+    settings.h \
+    platformutilities.h \
+    geometry.h \
+    layer.h \
+    modelhelper.h
 
-SOURCES += appinterface.cpp \
-            coordinatetransform.cpp \
-            crs.cpp \
-            feature.cpp \
-            featurelistextentcontroller.cpp \
-            featurelistmodel.cpp \
-            featurelistmodelhighlight.cpp \
-            featurelistmodelselection.cpp \
-            featuremodel.cpp \
-            main.cpp \
-            mapsettings.cpp \
-            maptransform.cpp \
-            qgismobileapp.cpp \
-            qgsmapcanvasproxy.cpp \
-            qgsquickmapcanvasmap.cpp \
-            qgssggeometry.cpp \
-            settings.cpp \
-    platformutilities.cpp
+SOURCES += \
+    appinterface.cpp \
+    coordinatetransform.cpp \
+    crs.cpp \
+    feature.cpp \
+    featurelistextentcontroller.cpp \
+    featurelistmodel.cpp \
+    featurelistmodelhighlight.cpp \
+    featurelistmodelselection.cpp \
+    featuremodel.cpp \
+    main.cpp \
+    mapsettings.cpp \
+    maptransform.cpp \
+    qgismobileapp.cpp \
+    qgsmapcanvasproxy.cpp \
+    qgsquickmapcanvasmap.cpp \
+    qgssggeometry.cpp \
+    settings.cpp \
+    platformutilities.cpp \
+    geometry.cpp \
+    layer.cpp \
+    modelhelper.cpp
 
 INCLUDEPATH += ../3rdparty/tessellate
 LIBS += ../3rdparty/tessellate/libtessellate.a
 
+# Make qml files translatable
+lupdate_only{
+  SOURCES = qml/*.qml
+}
+
 RESOURCES += \
     ../images/images.qrc \
-    qml/qml.qrc
+    qml/qml.qrc \
+    ../i18n/translations.qrc
 
 android {
-  message("* Using settings for Android $$ANDROID_TARGET_ARCH$$")
-  message("* Using OSGEO4A for Android at $${OSGEO4A_STAGE_DIR}")
+  message( "* Using settings for Android $$ANDROID_TARGET_ARCH$$" )
+  message( "* Using OSGEO4A for Android at $${OSGEO4A_STAGE_DIR}" )
 
   #see http://doc.qt.io/qt-5/deployment-android.html#androiddeployqt for docs
   ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../android
@@ -84,5 +100,5 @@ android {
 }
 
 !android {
-  message("* Using QGIS from $${QGIS_INSTALL_PATH}")
+  message( "* Using QGIS from $${QGIS_INSTALL_PATH}" )
 }

@@ -15,14 +15,16 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSEXTENDEDFEATURE_H
-#define QGSEXTENDEDFEATURE_H
+#ifndef FEATURE_H
+#define FEATURE_H
 
 #include <qgsfeature.h>
 #include <qgsvectorlayer.h>
 
 class Feature
 {
+    Q_GADGET
+
   public:
     Feature( const QgsFeature& feature, QgsVectorLayer* layer );
     Feature();
@@ -42,6 +44,17 @@ class Feature
       return mFeature.attribute( index );
     }
 
+    void setAttribute( int index, const QVariant& value );
+
+    void setLayer( QgsVectorLayer* layer )
+    {
+      mLayer = layer;
+      if ( layer )
+        mFeature = QgsFeature( layer->fields() );
+      else
+        mFeature = QgsFeature();
+    }
+
     QgsVectorLayer* layer() const
     {
       return mLayer;
@@ -52,19 +65,26 @@ class Feature
       return mFeature.id();
     }
 
-    const QgsFeature& qgsFeature() const
+    QgsFeature qgsFeature() const
     {
       return mFeature;
     }
 
-    const QString displayText() const;
+    void setGeometry( const QgsGeometry& geom );
+
+    void create();
+
+    QString displayText() const;
+
+    Q_INVOKABLE bool readOnly() const;
+
+    Q_INVOKABLE bool remove();
 
   private:
-    // TODO: Use implicity sharing for this
     QgsFeature mFeature;
     QgsVectorLayer* mLayer;
 };
 
 Q_DECLARE_METATYPE( Feature )
 
-#endif // QGSEXTENDEDFEATURE_H
+#endif // FEATURE_H

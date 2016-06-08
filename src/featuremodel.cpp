@@ -36,24 +36,41 @@ void FeatureModel::setFeature( const Feature& feature, bool force )
   if ( feature.layer() != mFeature.layer() || feature.id() != mFeature.id() || force )
   {
     beginResetModel();
+    if ( feature.layer() )
+      mRememberedAttributes.resize( feature.layer()->fields().count() );
+    else
+      mRememberedAttributes.resize( 0 );
     mFeature = feature;
     endResetModel();
   }
 }
 
-QVariant FeatureModel::feature()
+void FeatureModel::setLayer( QgsVectorLayer* layer )
 {
-  return QVariant::fromValue<Feature>( mFeature );
+  if ( layer != mFeature.layer() )
+    mFeature.setLayer( layer );
+
+  setFeature( mFeature, true );
+}
+
+QgsVectorLayer* FeatureModel::layer() const
+{
+  return mFeature.layer();
+}
+
+Feature FeatureModel::feature() const
+{
+  return mFeature;
 }
 
 QHash<int, QByteArray> FeatureModel::roleNames() const
 {
-
-  QHash<int, QByteArray> roles;
-  roles[AttributeName]  = "attributeName";
-  roles[AttributeValue] = "attributeValue";
-  roles[EditorWidget] = "editorWidget";
-  roles[EditorWidgetConfig] = "editorWidgetConfig";
+  QHash<int, QByteArray> roles = QAbstractListModel::roleNames();
+  roles[AttributeName]  = "AttributeName";
+  roles[AttributeValue] = "AttributeValue";
+  roles[EditorWidget] = "EditorWidget";
+  roles[EditorWidgetConfig] = "EditorWidgetConfig";
+  roles[RememberValue] = "RememberValue";
 
   return roles;
 }
@@ -84,38 +101,95 @@ QVariant FeatureModel::data( const QModelIndex& index, int role ) const
       break;
 
     case EditorWidget:
-      return mFeature.layer()->editorWidgetV2( index.row() );
+      return mFeature.layer()->editFormConfig()->widgetType( index.row() );
       break;
 
     case EditorWidgetConfig:
-      return mFeature.layer()->editorWidgetV2Config( index.row() );
+      return mFeature.layer()->editFormConfig()->widgetConfig( index.row() );
+      break;
+
+    case RememberValue:
+      return mRememberedAttributes.at( index.row() ) ? Qt::Checked : Qt::Unchecked;
+      break;
   }
 
   return QVariant();
 }
 
-
-bool FeatureModel::setData( int fieldIndex, const QVariant& value )
+bool FeatureModel::setData( const QModelIndex& index, const QVariant& value, int role )
 {
-  if ( ! mFeature.layer()->isEditable() )
-    mFeature.layer()->startEditing();
+  if ( role == RememberValue )
+  {
+    mRememberedAttributes[index.row()] = value.toBool();
+    return true;
+  }
 
-  return mFeature.layer()->changeAttributeValue( mFeature.id(), fieldIndex, value, mFeature.attribute( fieldIndex ) );
+  return false;
+}
+
+
+void FeatureModel::setAttribute( int fieldIndex, const QVariant& value )
+{
+  mFeature.setAttribute( fieldIndex, value );
 }
 
 bool FeatureModel::save()
 {
+  if ( !mFeature.layer() )
+    return false;
+
+  mFeature.layer()->startEditing();
+  QgsFeature feat = mFeature.qgsFeature();
+  mFeature.layer()->updateFeature( feat );
   bool rv = mFeature.layer()->commitChanges();
   if ( rv )
   {
     QgsFeature feat;
-    mFeature.layer()->getFeatures( QgsFeatureRequest().setFilterFid( mFeature.id() ) ).nextFeature( feat );
-    setFeature( Feature( feat, mFeature.layer() ), true );
+    if ( mFeature.layer()->getFeatures( QgsFeatureRequest().setFilterFid( mFeature.id() ) ).nextFeature( feat ) )
+      setFeature( Feature( feat, mFeature.layer() ), true );
   }
   return rv;
 }
 
 void FeatureModel::reset()
 {
+  if ( !mFeature.layer() )
+    return;
+
   mFeature.layer()->rollBack();
+}
+
+bool FeatureModel::suppressFeatureForm() const
+{
+  if ( !mFeature.layer() )
+    return false;
+
+  return mFeature.layer()->editFormConfig()->suppress();
+}
+
+void FeatureModel::resetAttributes( bool skipRemembered )
+{
+  beginResetModel();
+  for ( int i = 0; i < mFeature.layer()->fields().count(); ++i )
+  {
+    if ( !mRememberedAttributes.at( i ) || !skipRemembered )
+    {
+      mFeature.setAttribute( i, QVariant() );
+    }
+  }
+  endResetModel();
+}
+
+void FeatureModel::applyGeometry()
+{
+  mFeature.setGeometry( mGeometry->asQgsGeometry() );
+}
+
+void FeatureModel::create()
+{
+  if ( !mFeature.layer() )
+    return;
+
+  mFeature.layer()->startEditing(); // better safe than sorry
+  mFeature.create();
 }

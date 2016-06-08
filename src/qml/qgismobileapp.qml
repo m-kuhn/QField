@@ -16,15 +16,26 @@
  ***************************************************************************/
 
 import QtQuick 2.0
-import QtQuick.Controls 1.2
+import QtQuick.Controls 1.4 as Controls
 import QtQuick.Dialogs 1.2
 import QtQml 2.2
 import org.qgis 1.0
-import QtPositioning 5.3
+import QtPositioning 5.4
 
 Rectangle {
   id: mainWindow
   anchors.fill: parent
+
+  states: [
+    State {
+      name: "browse"
+    },
+
+    State {
+      name: "digitize"
+    }
+  ]
+  state: "browse"
 
   /*
    * The position source to access the GPS
@@ -88,6 +99,16 @@ Rectangle {
       }
     }
 
+    CoordinateLocator {
+      id: coordinateLocator
+
+      mapSettings: mapCanvas.mapSettings
+
+      anchors.fill: parent
+
+      visible: ( mainWindow.state === "digitize" )
+    }
+
     /* GPS marker  */
     LocationMarker {
       id: locationMarker
@@ -103,8 +124,7 @@ Rectangle {
     }
   }
 
-  Item
-  {
+  Item {
     id: positionInformationView
     anchors.right: featureForm.left
     anchors.top: parent.top
@@ -136,7 +156,7 @@ Rectangle {
   }
 
   /* The feature form */
-  FeatureForm {
+  FeatureListForm {
     id: featureForm
     mapSettings: mapCanvas.mapSettings
 
@@ -154,22 +174,34 @@ Rectangle {
   }
 
   /* The main menu */
-  Column {
+  Row {
     id: mainMenuBar
-    x: 10
-    y: 10
-    spacing: 10
+    height: childrenRect.height
 
+    Button {
+      iconSource: "/themes/holodark/settings.png"
+      onClicked: {
+        mainMenu.popup()
+      }
+    }
+
+    LayerSelector {
+      id: layerSelector
+
+      width: 200*dp
+      visible: ( mainWindow.state === "digitize" )
+    }
+
+/*
     Item {
-      height: dp*48
-      width: dp*48
+      height: parent.height
+      width: 300*dp
 
       Rectangle {
         anchors.fill: parent
         color: "#bb555555"
         border.color: "#dddddd"
         border.width: 1
-        radius: dp*5
       }
 
       MouseArea {
@@ -180,29 +212,20 @@ Rectangle {
         }
       }
 
-      Image {
-        anchors.centerIn: parent
-        width: 42
-        height: 42
-        source: "/themes/holodark/settings.png"
-      }
+      visible: ( mainWindow.state === "digitize" )
     }
-
-    Item {
+*/
+    Button {
       id: gpsButton
-      height: dp*48
-      width: dp*48
       state: positionSource.active ? "On" : "Off"
       visible: positionSource.valid
-
-      property alias icon: icon.source
 
       states: [
         State {
           name: "Off"
           PropertyChanges {
             target: gpsButton
-            icon: "/themes/holodark/location_off.png"
+            iconSource: "/themes/holodark/location_off.png"
           }
         },
 
@@ -210,54 +233,42 @@ Rectangle {
           name: "On"
           PropertyChanges {
             target: gpsButton
-            icon: "/themes/holodark/location.png"
+            iconSource: "/themes/holodark/location.png"
           }
         }
       ]
 
-      Rectangle {
-        anchors.fill: parent
-        color: "#bb555555"
-        border.color: "#dddddd"
-        border.width: 1
-        radius: dp*5
+      onClicked: {
+        if ( positionSource.position.latitudeValid )
+        {
+          var coord = positionSource.position.coordinate;
+          var loc = Qt.point( coord.longitude, coord.latitude );
+          mapCanvas.mapSettings.setCenter( locationMarker.coordinateTransform.transform( loc ) )
+
+          if ( !positionSource.active )
+          {
+            displayToast( qsTr( "Using cached position. Press and hold the positioning button to turn on real-time positioning." ) )
+          }
+        }
+        else
+        {
+          if ( positionSource.valid )
+          {
+            if ( positionSource.active )
+            {
+              displayToast( qsTr( "Waiting for location..." ) )
+            }
+            else
+            {
+              displayToast( qsTr( "Activating positioning service..." ) )
+              positionSource.active = true
+            }
+          }
+        }
       }
 
-      MouseArea {
-        anchors.fill: parent
-
-        onClicked: {
-          if ( positionSource.position.latitudeValid )
-          {
-            var coord = positionSource.position.coordinate;
-            var loc = Qt.point( coord.longitude, coord.latitude );
-            mapCanvas.mapSettings.setCenter( locationMarker.coordinateTransform.transform( loc ) )
-
-            if ( !positionSource.active )
-            {
-              displayToast( qsTr( "Using cached position. Turn on positioning for more recent location." ) )
-            }
-          }
-          else
-          {
-            if ( positionSource.valid )
-            {
-              if ( positionSource.active )
-              {
-                displayToast( qsTr( "Waiting for location..." ) )
-              }
-              else
-              {
-                displayToast( qsTr( "Activating positioning service..." ) )
-                positionSource.active = true
-              }
-            }
-          }
-        }
-
-        onPressAndHold: {
-          gpsMenu.popup()
-        }
+      onPressAndHold: {
+        gpsMenu.popup()
       }
 
       function toggleGps() {
@@ -265,72 +276,110 @@ Rectangle {
         {
           case "Off":
             gpsButton.state = "On"
-            displayToast( "GPS is now on" )
+            displayToast( qsTr( "Positioning is now on" ) )
             break;
 
           case "On":
             gpsButton.state = "Off"
-            displayToast( "GPS is now off" )
+            displayToast( qsTr( "Positioning is now off" ) )
             break;
         }
       }
+    }
+  }
 
-      Image {
-        id: icon
-        anchors.centerIn: parent
-        width: 42
-        height: 42
+  DigitizingToolbar {
+    id: digitizingToolbar
+
+    anchors.bottom: mapCanvas.bottom
+    anchors.right: mapCanvas.right
+
+    visible: ( mainWindow.state === "digitize" )
+    geometry: feature.geometry
+    currentLayer: layerSelector.currentLayer
+
+    FeatureModel{
+      id: digitizingFeature
+      currentLayer: layerSelector.currentLayer
+
+      geometry: Geometry {
+        currentCoordinate: coordinateLocator.coordinate
+      }
+    }
+
+    onGeometryDigitized: {
+      coordinateLocator.flash()
+
+      digitizingFeature.applyGeometry()
+
+      if ( !digitizingFeature.suppressFeatureForm() )
+      {
+        digitizingFeature.resetAttributes();
+        overlayFeatureForm.visible = true;
+        overlayFeatureForm.state = "Add"
+      }
+      else
+      {
+        digitizingFeature.create()
+        digitizingFeature.save()
       }
     }
   }
 
   FileDialog {
     id: openProjectDialog
-    title: "Please choose a project"
+    title: qsTr( "Please choose a project" )
     visible: false
+    nameFilters: [ qsTr( "QGIS projects (*.qgs)" ), qsTr( "All files (*)" ) ]
+
     width: parent.width
     height: parent.height
-    nameFilters: [ "QGIS projects (*.qgs)", "All files (*)" ]
 
     onAccepted: {
       iface.loadProject( openProjectDialog.fileUrl.toString().slice(7) )
     }
   }
 
-  Menu {
+  Controls.Menu {
     id: mainMenu
-    title: "Main Menu"
+    title: qsTr( "Main Menu" )
 
-    MenuItem {
-      text: "Open Project"
+    Controls.Menu {
+      title: qsTr( "Mode" )
+
+      Controls.MenuItem {
+        text: qsTr( "Browse" )
+        onTriggered: mainWindow.state = "browse"
+      }
+
+      Controls.MenuItem {
+        text: qsTr( "Digitize" )
+        onTriggered: mainWindow.state = "digitize"
+      }
+    }
+
+    Controls.MenuItem {
+      text: qsTr( "Open Project" )
       iconSource: "/themes/holodark/map.png"
       onTriggered: {
         openProjectDialog.visible = true
       }
     }
-/*
-    MenuItem {
-      text: "Layers"
-      iconSource: "/themes/holodark/layers.png"
-      onTriggered: {
-        messageDialog.visible = true
-      }
-    }
-*/
-    MenuSeparator {}
 
-    MenuItem {
-      text: "About"
+    Controls.MenuSeparator {}
+
+    Controls.MenuItem {
+      text: qsTr( "About" )
 
       onTriggered: {
         aboutDialog.visible = true
       }
     }
 
-    MenuSeparator {}
+    Controls.MenuSeparator {}
 
-    MenuItem {
-      text: "Quit"
+    Controls.MenuItem {
+      text: qsTr( "Quit" )
       iconSource: "/themes/holodark/remove.png"
       onTriggered: {
         Qt.quit()
@@ -338,11 +387,11 @@ Rectangle {
     }
   }
 
-  Menu {
+  Controls.Menu {
     id: gpsMenu
-    title: "GPS Options"
+    title: qsTr( "GPS Options" )
 
-    MenuItem {
+    Controls.MenuItem {
       text: qsTr( "Enable GPS" )
       checkable: true
       checked: positionSource.active
@@ -351,7 +400,7 @@ Rectangle {
       }
     }
 
-    MenuItem {
+    Controls.MenuItem {
       text: qsTr( "Center current location" )
       onTriggered: {
         var coord = positionSource.position.coordinate;
@@ -360,9 +409,9 @@ Rectangle {
       }
     }
 
-    MenuSeparator {}
+    Controls.MenuSeparator {}
 
-    MenuItem {
+    Controls.MenuItem {
       text: qsTr( "Show position information" )
       checkable: true
       checked: settings.valueBool( "/QField/Positioning/ShowInformationView", false )
@@ -374,16 +423,32 @@ Rectangle {
     }
   }
 
-  MessageDialog {
-    id: messageDialog
-    title: "Not implemented yet"
-    text: "And of course you could only agree"
-    onAccepted: {
-      messageDialog.visible = false
-    }
+  Rectangle {
+    id: overlayBackground
+
+    anchors.fill: parent
+
+    visible: overlayFeatureForm.visible
+
+    color: "white"
   }
 
-  function displayToast(message) {
+  FeatureForm {
+    id: overlayFeatureForm
+
+    anchors.fill: parent
+
+    model: digitizingFeature
+
+    state: "Add"
+
+    visible: false
+
+    onSaved: visible = false
+    onCancelled: visible = false
+  }
+
+  function displayToast( message ) {
     toastMessage.text = message
     toast.opacity = 1
   }
@@ -395,7 +460,7 @@ Rectangle {
     opacity: 0.5
     visible: false
 
-    BusyIndicator {
+    Controls.BusyIndicator {
       id: busyMessageIndicator
       anchors.centerIn: parent
       running: true

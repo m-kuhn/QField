@@ -25,12 +25,18 @@
 // QGIS includes
 #include <qgsapplication.h>
 #include <qgslayertreemapcanvasbridge.h>
+#include <qgslayertreemodel.h>
+#include <qgsmaplayerproxymodel.h>
 
 // QGIS mobile includes
 #include "featuremodel.h"
 #include "featurelistmodel.h"
 #include "settings.h"
+
 #include "platformutilities.h"
+#if defined(Q_OS_ANDROID)
+#include "androidplatformutilities.h"
+#endif
 
 class AppInterface;
 
@@ -82,6 +88,8 @@ class QgisMobileapp : public QQuickView
 
     void onAfterFirstRendering();
 
+    void onLayerAdded( QgsMapLayer* ml );
+
   private:
     void initDeclarative();
 
@@ -89,13 +97,18 @@ class QgisMobileapp : public QQuickView
 
     QgsMapCanvas* mMapCanvas;
     QgsLayerTreeMapCanvasBridge* mLayerTreeCanvasBridge;
+    QgsLayerTreeModel* mLayerTree;
+    QgsMapLayerProxyModel* mLayerList;
     AppInterface* mIface;
     FeatureModel mFeatureModel;
     FeatureListModel mFeatureListModel;
     Settings mSettings;
     bool mFirstRenderingFlag;
+#if defined(Q_OS_ANDROID)
+    AndroidPlatformUtilities mPlatformUtils;
+#else
     PlatformUtilities mPlatformUtils;
-
+#endif
 };
 
 #endif // QGISMOBILEAPP_H

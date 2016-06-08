@@ -17,7 +17,6 @@
 
 
 import QtQuick 2.0
-import QtQuick.Controls 1.2
 import org.qgis 1.0
 
 Rectangle {
@@ -69,7 +68,14 @@ Rectangle {
     Text {
       anchors.centerIn: parent
 
-      text: ( selection.selection + 1 ) + '/' + model.count + ': ' + currentName
+      text: {
+        if ( model ) {
+          ( selection.selection + 1 ) + '/' + model.count + ': ' + currentName
+        }
+        else {
+          undefined
+        }
+      }
     }
 
     MouseArea {
@@ -92,7 +98,7 @@ Rectangle {
 
     iconSource: "/themes/holodark/next_item.png"
 
-    enabled: ( ( selection.selection + 1 ) < toolBar.model.count )
+    enabled: ( toolBar.model && ( selection.selection + 1 ) < toolBar.model.count )
 
     onClicked: {
       selection.selection = selection.selection + 1
@@ -152,9 +158,11 @@ Rectangle {
   Button {
     id: editButton
 
+    property bool readOnly: false
+
     anchors.right: nextButton.left
 
-    width: ( parent.state == "Navigation" ? 48*dp : 0 )
+    width: ( parent.state == "Navigation" && !readOnly ? 48*dp : 0 )
     height: 48*dp
     clip: true
 
@@ -167,6 +175,15 @@ Rectangle {
     Behavior on width {
       PropertyAnimation {
         easing.type: Easing.InQuart
+      }
+    }
+
+    Connections {
+      target: selection
+
+      onSelectionChanged:
+      {
+        editButton.readOnly = selection.selectedFeature.readOnly()
       }
     }
   }

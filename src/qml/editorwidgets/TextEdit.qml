@@ -6,7 +6,8 @@ TextEdit {
   anchors.left: parent.left
   anchors.right: parent.right
 
-  text: value
+  text: value || ''
+  textFormat: config['UseHtml'] ? TextEdit.RichText : TextEdit.PlainText
 
   onTextChanged: {
     valueChanged( text )

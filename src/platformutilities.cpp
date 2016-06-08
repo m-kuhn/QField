@@ -1,5 +1,5 @@
 /***************************************************************************
-                            utilities.cpp  -  utilities for qfield
+                            platformutilities.cpp  -  utilities for qfield
 
                               -------------------
               begin                : Wed Dec 04 10:48:28 CET 2015
@@ -18,65 +18,19 @@
 
 #include "platformutilities.h"
 #include <QDebug>
-#include <QtAndroid>
 
 
-PlatformUtilities::PlatformUtilities( QObject *parent ) :
-  QObject( parent )
+PlatformUtilities::PlatformUtilities()
 {
 }
 
-QString PlatformUtilities::getIntentExtra(QString extra, QAndroidJniObject extras){
-    if (extras == 0){
-        extras = getNativeExtras();
-    }
-    if(extras.isValid()){
-        QAndroidJniObject extraJni = QAndroidJniObject::fromString(extra);
-        extraJni = extras.callObjectMethod("getString", "(Ljava/lang/String;)Ljava/lang/String;", extraJni.object<jstring>());
-        if (extraJni.isValid()){
-            extra = extraJni.toString();
-            return extra;
-        }
-    }
-    return "";
-}
-
-
-QMap<QString, QString> PlatformUtilities::getIntentExtras(QStringList intentExtras)
+QString PlatformUtilities::configDir() const
 {
-    QAndroidJniObject extras = getNativeExtras();
-    QString extraValue, extraName;
-    QMap<QString, QString> extraMap;
-
-    for (int i = 0; i < intentExtras.size(); ++i){
-        extraName = intentExtras.at(i).toLocal8Bit().constData();
-        extraValue = getIntentExtra(extraValue, extras);
-        extraMap.insert(extraName, extraValue);
-    }
-    return extraMap;
+  return QString();
 }
 
-QAndroidJniObject PlatformUtilities::getNativeIntent()
+QString PlatformUtilities::shareDir() const
 {
-    QAndroidJniObject activity = QtAndroid::androidActivity();
-    if (activity.isValid()) {
-        QAndroidJniObject intent = activity.callObjectMethod("getIntent", "()Landroid/content/Intent;");
-        if (intent.isValid()) {
-            qDebug() << "Intent: " << intent.toString();
-            return intent;
-        }
-    }
-    return 0;
+  return QString();
 }
 
-QAndroidJniObject PlatformUtilities::getNativeExtras()
-{
-    QAndroidJniObject intent = getNativeIntent();
-    if (intent.isValid()){
-        QAndroidJniObject extras = intent.callObjectMethod("getExtras", "()Landroid/os/Bundle;");
-        qDebug() << "Extras: " << extras.toString();
-
-        return extras;
-    }
-    return 0;
-}
