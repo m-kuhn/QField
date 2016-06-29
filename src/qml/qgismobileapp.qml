@@ -49,6 +49,12 @@ Rectangle {
     onPositionChanged: {
       var coord = positionSource.position.coordinate;
       locationMarker.location = Qt.point( coord.longitude, coord.latitude )
+      if (positionSource.position.horizontalAccuracyValid){
+        locationMarker.accuracy = positionSource.position.horizontalAccuracy
+      }
+      else{
+        locationMarker.accuracy = -1
+      }
     }
   }
 
