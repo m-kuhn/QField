@@ -2,6 +2,7 @@
 #define GEOMETRY_H
 
 #include <qgsgeometry.h>
+#include <rubberbandmodel.h>
 
 #include <QtPositioning/QGeoCoordinate>
 
@@ -9,21 +10,29 @@ class Geometry : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY( QPointF currentCoordinate READ currentCoordinate WRITE setCurrentCoordinate NOTIFY currentCoordinateChanged)
+    Q_PROPERTY( RubberbandModel* rubberbandModel READ rubberbandModel WRITE setRubberbandModel NOTIFY rubberbandModelChanged )
+    Q_PROPERTY( QgsVectorLayer* vectorLayer READ vectorLayer WRITE setVectorLayer NOTIFY vectorLayerChanged )
 
   public:
     explicit Geometry( QObject* parent = nullptr );
 
     QgsGeometry asQgsGeometry() const;
 
-    QPointF currentCoordinate();
-    void setCurrentCoordinate( QPointF coord );
+    RubberbandModel* rubberbandModel() const;
+    void setRubberbandModel( RubberbandModel* rubberbandModel );
+
+    Q_INVOKABLE void applyRubberband();
+
+    QgsVectorLayer* vectorLayer() const;
+    void setVectorLayer(QgsVectorLayer* vectorLayer);
 
   signals:
-    void currentCoordinateChanged();
+    void rubberbandModelChanged();
+    void vectorLayerChanged();
 
   private:
-    QPointF mCurrentCoordinate;
+    RubberbandModel* mRubberbandModel;
+    QgsVectorLayer* mVectorLayer;
 };
 
 #endif // GEOMETRY_H

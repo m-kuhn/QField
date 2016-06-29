@@ -1,20 +1,88 @@
-import QtQuick 2.0
+import QtQuick 2.6
 import org.qgis 1.0
+import "js/style.js" as Style
 
 Row {
-  property Geometry geometry
-  property VectorLayer currentLayer
+  id: digitizingToolbar
+  property RubberbandModel rubberbandModel
+  property bool isDigitizing: rubberbandModel.vertexCount > 1 //!< Readonly
 
-  signal geometryDigitized
+  spacing: 4 * dp
+  padding: 4 * dp
 
+  signal vertexAdded
+  signal vertexRemoved
+  signal cancel
+  signal confirm
 
   Button {
     id: addVertexButton
-
-    iconSource: "/themes/holodark/accept.png"
+    iconSource: {
+      if( digitizingToolbar.rubberbandModel.vertexCount === 1 )
+        Style.getThemeIcon( "ic_create_white_24dp" )
+      else
+        Style.getThemeIcon( "ic_add_white_24dp" )
+    }
+    visible: Number(rubberbandModel.geometryType) === 1 || Number(rubberbandModel.geometryType) === 2
+    round: true
+    bgcolor: "#2E7D32"
 
     onClicked: {
-      geometryDigitized()
+      vertexAdded()
+    }
+  }
+
+  Button {
+    id: removeVertexButton
+    iconSource: Style.getThemeIcon( "ic_remove_white_24dp" )
+    visible: rubberbandModel.vertexCount > 1
+    round: true
+    bgcolor: "#616161"
+
+    onClicked: {
+      vertexRemoved()
+    }
+  }
+
+  Button {
+    id: cancelButton
+    iconSource: Style.getThemeIcon( "ic_clear_white_24dp" )
+    visible: rubberbandModel.vertexCount > 1
+    round: true
+    bgcolor: "#616161"
+
+    onClicked: {
+      cancel()
+    }
+  }
+
+  Button {
+    id: confirmButton
+    iconSource: {
+      if ( rubberbandModel.geometryType === 0 )
+      {
+        Style.getThemeIcon( "ic_create_white_24dp" )
+      }
+      else
+      {
+        Style.getThemeIcon( "ic_save_white_24dp" )
+      }
+    }
+    visible: {
+      if ( rubberbandModel.geometryType === 0 )
+      {
+        true
+      }
+      else
+      {
+        rubberbandModel.vertexCount > 1
+      }
+    }
+    round: true
+    bgcolor: "#E64A19"
+
+    onClicked: {
+      confirm()
     }
   }
 }
