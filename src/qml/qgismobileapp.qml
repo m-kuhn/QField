@@ -31,6 +31,8 @@ import '.'
 ApplicationWindow {
   id: mainWindow
   visible: true
+  minimumWidth: 600
+  minimumHeight: 400
 
   Item {
     id: stateMachine
@@ -227,10 +229,10 @@ ApplicationWindow {
     id: dashBoard
     anchors { left: parent.left; bottom: parent.bottom; top: parent.top; }
 
-    width: 0
+    width: 400
     clip: true
 
-    showLayerSelector: stateMachine.state === "digitize" && !digitizingToolbar.isDigitizing
+    allowLayerChange: !digitizingToolbar.isDigitizing
     mapSettings: mapCanvas.mapSettings
 
     Behavior on width {
