@@ -58,7 +58,7 @@ jobs:
         run: |
           cd "${{ github.workspace }}"
           .\vcpkg\bootstrap-vcpkg.bat
-          .\vcpkg\vcpkg.exe install qt5-declarative
+          .\vcpkg\vcpkg.exe install --triplet x64-windows qt5-declarative
           
       # Run CMake to generate Ninja project files, using the vcpkg's toolchain file to resolve and install the dependencies as specified in vcpkg.json.
       - name: Install dependencies and generate project files
