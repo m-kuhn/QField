@@ -56,6 +56,7 @@ IF(WIN32)
       PATHS
         "$ENV{OSGEO4W_ROOT}/apps/${OSGEO4W_QGIS_SUBDIR}/plugins"
         "$ENV{PROGRAMFILES}/QGIS/plugins"
+        "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qgis/plugins"
     )
     FIND_PATH(QGIS_INCLUDE_DIR
       NAMES qgsapplication.h

@@ -127,3 +127,27 @@ ADD_SUBDIRECTORY(3rdparty/tessellate)
 ADD_SUBDIRECTORY(src/core)
 ADD_SUBDIRECTORY(src/app)
 ADD_SUBDIRECTORY(test)
+
+if(MSVC)
+#get_cmake_property(_variableNames VARIABLES)
+#list (SORT _variableNames)
+#foreach (_variableName ${_variableNames})
+#    message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach()
+  file(GLOB PROVIDER_LIBS
+    "${QGIS_PLUGIN_DIR}/*provider.dll"
+  )
+  add_custom_target(deploy)
+  add_custom_command(TARGET deploy
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/output/bin/$<CONFIG>/qgis/plugins"
+  )
+  foreach(LIB ${PROVIDER_LIBS})
+    add_custom_command(TARGET deploy
+                      POST_BUILD
+                      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIB}" "${CMAKE_BINARY_DIR}/output/bin/$<CONFIG>/qgis/plugins"
+    )
+  endforeach()
+  add_dependencies(qfield deploy)
+#file(COPY ${PROVIDER_LIBS} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}/qgis/plugins)
+endif()

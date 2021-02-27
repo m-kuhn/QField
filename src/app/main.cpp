@@ -111,7 +111,14 @@ int main( int argc, char **argv )
 
   QSettings settings;
   app.setThemeName( settings.value( "/Themes", "default" ).toString() );
+
+#  if defined( Q_OS_WIN )
+  qputenv( "GDAL_DATA", QDir::toNativeSeparators( app.applicationDirPath() + "/gdal" ).toLocal8Bit() );
+  qputenv( "PROJ_DATA", QDir::toNativeSeparators( app.applicationDirPath() + "/proj" ).toLocal8Bit() );
+  app.setPrefixPath( app.applicationDirPath() + "/qgis", true );
+#  else
   app.setPrefixPath( CMAKE_INSTALL_PREFIX, true );
+#  endif
 #endif
   app.initQgis();
 
