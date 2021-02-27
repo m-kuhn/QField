@@ -10,6 +10,8 @@
     "qt5-webview",
     "qt5-connectivity",
     "qt5-quickcontrols2",
-    "qt5-declarative"
+    "qt5-declarative",
+    "qt5-location",
+    "qt5-charts"
   ]
 }
