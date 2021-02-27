@@ -58,6 +58,7 @@ jobs:
         run: |
           cmake -S "${{ github.workspace }}" -B "${{ env.CMAKE_BUILD_DIR }}" -GNinja -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
       - name: Debug
+        if: always()
         run: |
           cat "D:\a\QField\QField\vcpkg\buildtrees\qt5-declarative\package-build-x64-windows-dbg-out.log"
           cat "D:\a\QField\QField\vcpkg\buildtrees\qt5-declarative\package-build-x64-windows-dbg-err.log"
