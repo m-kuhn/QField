@@ -148,6 +148,23 @@ if(MSVC)
                       COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIB}" "${CMAKE_BINARY_DIR}/output/bin/$<CONFIG>/qgis/plugins"
     )
   endforeach()
+  add_custom_command(TARGET deploy
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${QGIS_PLUGIN_DIR}/../resources" "${CMAKE_BINARY_DIR}/output/bin/$<CONFIG>/qgis/resources"
+  )
+  add_custom_command(TARGET deploy
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${QGIS_PLUGIN_DIR}/../../../share/proj4" "${CMAKE_BINARY_DIR}/output/bin/$<CONFIG>/proj"
+  )
+  add_custom_command(TARGET deploy
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${QGIS_PLUGIN_DIR}/../../../share/gdal" "${CMAKE_BINARY_DIR}/output/bin/$<CONFIG>/gdal"
+  )
+
+  # also copy
+  # - plugins/mediaservices
+  # - QtMultimedia.dll
+  # - QtMultimediaQuick.dll
+
   add_dependencies(qfield deploy)
-#file(COPY ${PROVIDER_LIBS} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}/qgis/plugins)
 endif()
