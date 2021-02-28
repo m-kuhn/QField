@@ -52,7 +52,7 @@ IF(WIN32)
 
   IF (MSVC)
     FIND_PATH(QGIS_PLUGIN_DIR
-      NAMES offlineeditingplugin.dll
+      NAMES wmsprovider.dll
       PATHS
         "$ENV{OSGEO4W_ROOT}/apps/${OSGEO4W_QGIS_SUBDIR}/plugins"
         "$ENV{PROGRAMFILES}/QGIS/plugins"
