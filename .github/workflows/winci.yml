@@ -8,15 +8,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest]
         include:
           - os: windows-latest
             triplet: x64-windows
-          - os: ubuntu-latest
-            triplet: x64-linux
-          - os: macos-latest
-            triplet: x64-osx
-
     env:
       buildDir: '${{ github.workspace }}/build'
       
@@ -34,7 +29,7 @@ jobs:
           # Just install vcpkg for now, do not install any ports in this step yet.
           setupOnly: true
           # Location of the vcpkg submodule in the Git repository.
-          vcpkgDirectory: ${{ if(triplet =="x64-windows", "C:\vcpkg", "vcpkg") }}
+          vcpkgDirectory: "C:\vcpkg"
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg_manifest/vcpkg.json' ) }}
