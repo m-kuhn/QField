@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      VCPKG_ROOT: 'C:/vcpkg'
+      VCPKG_ROOT: 'C:/src'
       CMAKE_BUILD_DIR: C:/builddir/
       
     steps:
