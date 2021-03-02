@@ -53,3 +53,11 @@ jobs:
           # This input tells run-cmake to consume the vcpkg.cmake toolchain file set by run-vcpkg.
           useVcpkgToolchainFile: true
           buildWithCMake: true
+      
+      - name: Debug
+        if: always()
+        run: |
+          cat "D:\b\buildtrees\qt5-declarative\package-build-x64-windows-dbg-out.log"
+          cat "D:\b\buildtrees\qt5-declarative\package-build-x64-windows-dbg-err.log"
+          cat "D:\b\buildtrees\qt5-declarative\package-build-x64-windows-dbg-out-1.log"
+          cat "D:\b\buildtrees\qt5-declarative\package-build-x64-windows-dbg-err-1.log"
