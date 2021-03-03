@@ -13,6 +13,8 @@ jobs:
       VCPKG_SHA: qgis
       
     steps:
+      - run: Get-PSDrive
+
       - name: Checkout
         uses: actions/checkout@v2
 
