@@ -56,7 +56,7 @@ jobs:
       - name: Debug
         if: always()
         run: |
-          cat C:\builddir\vcpkg-manifest-install.log
+          cat C:\src\buildtrees\qgis\config-x64-windows-out.log
 
       - name: Build
         run: |
