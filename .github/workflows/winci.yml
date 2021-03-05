@@ -57,19 +57,9 @@ jobs:
       # Target x64 and use the default Windows SDK
       - uses: ilammy/msvc-dev-cmd@v1
 
-      # - name: Install dependencies and generate project files
-      #   run: |
-      #     cmake -S "${{ github.workspace }}" -B "${{ env.CMAKE_BUILD_DIR }}" -GNinja -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
-
-      # - name: Debug dbg install
-      #   if: always()
-      #   run: |
-      #     cat C:\src\buildtrees\qgis\config-x64-windows-out.log
-
-      # - name: Debug rel install
-      #   if: always()
-      #   run: |
-      #     cat C:\src\buildtrees\qgis\install-x64-windows-rel-out.log
+      - name: Install dependencies and generate project files
+        run: |
+          cmake -S "${{ github.workspace }}" -B "${{ env.CMAKE_BUILD_DIR }}" -GNinja -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
 
       # - name: Upload Build Logs
       #   uses: actions/upload-artifact@v2
@@ -78,9 +68,9 @@ jobs:
       #     name: build-logs
       #     path: C:/src/buildtrees/**/*.log
 
-#      - name: Build
-#        run: |
-#          cmake --build "${{ env.CMAKE_BUILD_DIR }}"
+      - name: Build
+        run: |
+          cmake --build "${{ env.CMAKE_BUILD_DIR }}"
 
       - name: Show space after build
         if: always()
