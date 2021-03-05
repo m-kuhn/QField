@@ -3,6 +3,7 @@ on: [push]
 
 jobs:
   vcpkg:
+    needs: build-qt
     name: Build for Windows
     runs-on: windows-latest
     strategy:
@@ -11,7 +12,7 @@ jobs:
       VCPKG_ROOT: 'C:/src'
       CMAKE_BUILD_DIR: C:/builddir/
       VCPKG_SHA: qgis
-      
+
     steps:
       - name: Show space before build
         run: |
@@ -50,14 +51,11 @@ jobs:
           # Note: given a key, the cache content is immutable. If a cache entry has been created improperly, in order the recreate the right content the key must be changed as well, and it must be brand new (i.e. not existing already).
           key: |
             ${{ hashFiles( 'vcpkg.json' ) }}-${{ env.VCPKG_SHA }}-${{ matrix.triplet }}-invalidate
+          restore-keys: |
+            ${{ hashFiles( 'vcpkg.json' ) }}-${{ env.VCPKG_SHA }}-${{ matrix.triplet }}-qt
     
       # Target x64 and use the default Windows SDK
       - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Preseed Qt
-        run: |
-          cd ${{ env.VCPKG_ROOT }}
-          .\vcpkg.exe install --triplet x64-windows qt5-declarative
 
       # - name: Install dependencies and generate project files
       #   run: |
@@ -88,3 +86,44 @@ jobs:
         if: always()
         run: |
           Get-PSDrive
+
+  # This is just a helper to seed the cache so we can stay
+  # within the github job time limit of 6 hours
+  build-qt:
+    name: Build Qt for Windows
+    runs-on: windows-latest
+    env:
+      VCPKG_ROOT: 'C:/src'
+      CMAKE_BUILD_DIR: C:/builddir/
+      VCPKG_SHA: qgis
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/m-kuhn/vcpkg.git "${{ env.VCPKG_ROOT }}"
+          cd "${{ env.VCPKG_ROOT }}"
+          git checkout "${{ env.VCPKG_SHA }}"
+          .\bootstrap-vcpkg.bat
+
+      - name: Restore vcpkg and its artifacts
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ env.CMAKE_BUILD_DIR }}/vcpkg_installed/
+            ${{ env.VCPKG_ROOT }}
+            !${{ env.VCPKG_ROOT }}/buildtrees
+            !${{ env.VCPKG_ROOT }}/packages
+            !${{ env.VCPKG_ROOT }}/downloads
+          key: |
+            ${{ hashFiles( 'vcpkg.json' ) }}-${{ env.VCPKG_SHA }}-${{ matrix.triplet }}-qt
+
+      - name: Preseed Qt
+        run: |
+          cd ${{ env.VCPKG_ROOT }}
+          .\vcpkg.exe install --triplet x64-windows qt5-declarative qt5-sensors qt5-webview qt5-connectivity qt5-quickcontrols2 qt5-declarative qt5-location qt5-charts qt5-multimedia
