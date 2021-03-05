@@ -57,7 +57,7 @@ jobs:
       - name: Preseed Qt
         run: |
           cd ${{ env.VCPKG_ROOT }}
-          .\vcpkg.exe install qt5-declarative
+          .\vcpkg.exe install --triplet x64-windows qt5-declarative
 
       # - name: Install dependencies and generate project files
       #   run: |
