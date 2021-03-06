@@ -35,7 +35,7 @@ jobs:
           .\bootstrap-vcpkg.bat
 
       - name: Restore vcpkg and its artifacts
-        uses: pat-s/always-upload-cache@v2.1.3
+        uses: actions/cache@v2
         with:
           # The first path is where vcpkg generates artifacts while consuming the vcpkg.json manifest file.
           # The second path is the location of vcpkg (it contains the vcpkg executable and data files).
