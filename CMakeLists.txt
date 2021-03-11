@@ -161,10 +161,11 @@ if(MSVC)
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${QGIS_PLUGIN_DIR}/../../../share/gdal" "${CMAKE_BINARY_DIR}/output/bin/$<CONFIG>/gdal"
   )
 
-  # also copy
-  # - plugins/mediaservices
-  # - QtMultimedia.dll
-  # - QtMultimediaQuick.dll
+  # This should be done by the qt deploy windows script ...
+  add_custom_command(TARGET deploy
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${QGIS_PLUGIN_DIR}/../../../share/plugin/mediaservice" "${CMAKE_BINARY_DIR}/output/bin/$<CONFIG>/plugins/mediaservice"
+  )
 
   add_dependencies(qfield deploy)
 endif()
