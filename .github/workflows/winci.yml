@@ -1,5 +1,5 @@
 name: winbuild
-on: [push]
+on: [push, pull_request]
 
 jobs:
   vcpkg:
