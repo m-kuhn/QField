@@ -1,5 +1,5 @@
 name: winbuild
-on: [push]
+on: [push, pull_request]
 
 jobs:
   vcpkg:
@@ -96,6 +96,7 @@ jobs:
           mkdir ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
 
       - name: Restore vcpkg and its artifacts
+        id: cache
         uses: actions/cache@v2
         with:
           path: |
@@ -104,6 +105,7 @@ jobs:
             ${{ hashFiles( 'vcpkg.json' ) }}-${{ env.VCPKG_SHA }}-${{ matrix.triplet }}-qt
 
       - name: Preseed Qt
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd ${{ env.VCPKG_ROOT }}
           .\vcpkg.exe install --triplet x64-windows qt5-declarative qt5-sensors qt5-webview qt5-connectivity qt5-quickcontrols2 qt5-declarative qt5-location qt5-charts qt5-multimedia
